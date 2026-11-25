@@ -3,7 +3,7 @@
   "displayName": "Rustel",
   "description": "Language server, live playback, and real-time pattern highlighting for Rustel (.strudel) scores.",
   "version": "0.1.0",
-  "publisher": "undy-aeon",
+  "publisher": "tzfm",
   "license": "AGPL-3.0-or-later",
   "icon": "images/icon.png",
   "engines": {
@@ -26,12 +26,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/undy-aeon/rustel-vscode.git"
+    "url": "https://github.com/tzfm/rustel-vscode.git"
   },
   "bugs": {
-    "url": "https://github.com/undy-aeon/rustel-vscode/issues"
+    "url": "https://github.com/tzfm/rustel-vscode/issues"
   },
-  "homepage": "https://github.com/undy-aeon/rustel-vscode#readme",
+  "homepage": "https://github.com/tzfm/rustel-vscode#readme",
   "main": "./src/extension.js",
   "activationEvents": [
     "onLanguage:strudel"

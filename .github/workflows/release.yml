@@ -1,0 +1,118 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate manifests, syntax, and tests
+        shell: bash
+        run: |
+          node -e '
+            const fs = require("fs");
+            for (const file of [
+              "package.json",
+              "language-configuration.json",
+              "syntaxes/strudel.tmLanguage.json",
+              ".vscode/launch.json"
+            ]) {
+              JSON.parse(fs.readFileSync(file, "utf8"));
+            }
+            if (!fs.existsSync("images/icon.png")) {
+              throw new Error("missing images/icon.png");
+            }
+          '
+          node --check src/protocol.js
+          node --check src/lsp-client.js
+          node --check src/player.js
+          node --check src/extension.js
+          node --test
+
+      - name: Verify version and tag
+        id: meta
+        shell: bash
+        run: |
+          VERSION="$(node -p 'require("./package.json").version')"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "vsix=rustel-vscode-${VERSION}.vsix" >> "$GITHUB_OUTPUT"
+
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            EXPECTED="v${VERSION}"
+            if [ "${GITHUB_REF_NAME}" != "${EXPECTED}" ]; then
+              echo "Tag ${GITHUB_REF_NAME} does not match package.json version ${EXPECTED}." >&2
+              exit 1
+            fi
+            git fetch origin main --depth=50
+            if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
+              echo "Tagged commit ${GITHUB_SHA} is not on main." >&2
+              exit 1
+            fi
+          fi
+
+      - name: Package VSIX
+        shell: bash
+        run: |
+          npx --yes @vscode/vsce package --no-dependencies --out "${{ steps.meta.outputs.vsix }}"
+          sha256sum "${{ steps.meta.outputs.vsix }}"
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustel-vscode-vsix
+          path: ${{ steps.meta.outputs.vsix }}
+          retention-days: 14
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" "${{ steps.meta.outputs.vsix }}" \
+            --verify-tag \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes
+
+      - name: Publish to VS Code Marketplace
+        if: github.event_name == 'push'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "${VSCE_PAT}" ]; then
+            echo "VSCE_PAT secret is not set; skipped VS Code Marketplace publish."
+            exit 0
+          fi
+          npx --yes @vscode/vsce publish --packagePath "${{ steps.meta.outputs.vsix }}" -p "${VSCE_PAT}"
+
+      - name: Publish to Open VSX
+        if: github.event_name == 'push'
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -z "${OVSX_PAT}" ]; then
+            echo "OVSX_PAT secret is not set; skipped Open VSX publish."
+            exit 0
+          fi
+          npx --yes ovsx publish "${{ steps.meta.outputs.vsix }}" -p "${OVSX_PAT}"

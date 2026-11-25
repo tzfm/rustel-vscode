@@ -11,13 +11,13 @@ Requires a `rustel` binary with `rustel lsp --stdio` on your `PATH` (or set `rus
 macOS and Linux:
 
 ```sh
-git clone https://github.com/undy-aeon/rustel-vscode.git ~/.vscode/extensions/rustel-vscode
+git clone https://github.com/tzfm/rustel-vscode.git ~/.vscode/extensions/rustel-vscode
 ```
 
 Windows (PowerShell):
 
 ```powershell
-git clone https://github.com/undy-aeon/rustel-vscode.git "$env:USERPROFILE\.vscode\extensions\rustel-vscode"
+git clone https://github.com/tzfm/rustel-vscode.git "$env:USERPROFILE\.vscode\extensions\rustel-vscode"
 ```
 
 Reload VS Code. Run `git pull` in that folder to update.
@@ -39,11 +39,12 @@ Open `examples/demo.strudel` (or any `.strudel` / `.std` file):
 - `rustel.highlightEvents`: highlight active tokens during playback (default `true`).
 - `rustel.trace`: set to `messages` to inspect raw LSP frames in the Rustel output log.
 
-## Test and publish
+## Release and publish
 
-- Open this folder in VS Code and press `F5` to launch a test window.
-- Run `node --test` (or `RUSTEL_BIN=rustel node --test` for a live LSP check).
-- Package or publish to the VS Code Marketplace with `npx @vscode/vsce package` or `npx @vscode/vsce publish`.
+- Add a `VSCE_PAT` repository secret from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/manage) (and optional `OVSX_PAT` for Open VSX).
+- Bump `version` in `package.json`, push to `main`, and push a matching tag such as `v0.1.0`.
+- `.github/workflows/release.yml` runs tests, attaches the `.vsix` to a GitHub Release, and publishes automatically.
+- Local dev: open this folder in VS Code and press `F5`, or run `node --test`.
 
 ## License
 
