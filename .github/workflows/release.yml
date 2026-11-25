@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -100,11 +101,11 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          if [ -z "${VSCE_PAT}" ]; then
-            echo "VSCE_PAT secret is not set; skipped VS Code Marketplace publish."
-            exit 0
+          if [ -n "${VSCE_PAT}" ]; then
+            npx --yes @vscode/vsce publish --packagePath "${{ steps.meta.outputs.vsix }}" -p "${VSCE_PAT}"
+          else
+            npx --yes @vscode/vsce publish --oidc --packagePath "${{ steps.meta.outputs.vsix }}"
           fi
-          npx --yes @vscode/vsce publish --packagePath "${{ steps.meta.outputs.vsix }}" -p "${VSCE_PAT}"
 
       - name: Publish to Open VSX
         if: github.event_name == 'push'

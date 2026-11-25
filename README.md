@@ -41,9 +41,9 @@ Open `examples/demo.strudel` (or any `.strudel` / `.std` file):
 
 ## Release and publish
 
-- Add a `VSCE_PAT` repository secret from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/manage) (and optional `OVSX_PAT` for Open VSX).
+- Under the `tzfm` publisher on the [Visual Studio Marketplace](https://marketplace.visualstudio.com/manage), add a Trusted Publishing policy for `tzfm` / `rustel-vscode` / `release.yml` (no long-lived secret needed).
 - Bump `version` in `package.json`, push to `main`, and push a matching tag such as `v0.1.0`.
-- `.github/workflows/release.yml` runs tests, attaches the `.vsix` to a GitHub Release, and publishes automatically.
+- `.github/workflows/release.yml` runs tests, attaches the `.vsix` to a GitHub Release, and publishes automatically via OIDC (plus Open VSX if `OVSX_PAT` is set).
 - Local dev: open this folder in VS Code and press `F5`, or run `node --test`.
 
 ## License
