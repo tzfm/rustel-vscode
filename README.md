@@ -1,6 +1,6 @@
 # Rustel for VS Code
 
-VS Code extension for [Rustel](https://github.com/tzfm/rustel). Zero dependencies, no build step.
+VS Code extension for [Rustel](https://github.com/tzfm/rustel)
 
 Uses `rustel lsp --stdio` for completion, hover docs, and lint diagnostics, and `rustel play --watch --ui-events` for live playback with real-time note highlighting.
 
