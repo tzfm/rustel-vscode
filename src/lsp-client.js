@@ -169,13 +169,21 @@ class RustelLspClient {
           },
           completion: {
             completionItem: {
-              snippetSupport: false,
+              snippetSupport: true,
               documentationFormat: ['markdown', 'plaintext'],
               deprecatedSupport: true,
             },
           },
           hover: {
             contentFormat: ['markdown', 'plaintext'],
+          },
+          signatureHelp: {
+            signatureInformation: {
+              documentationFormat: ['markdown', 'plaintext'],
+              parameterInformation: {
+                labelOffsetSupport: false,
+              },
+            },
           },
           publishDiagnostics: {},
         },
@@ -342,6 +350,32 @@ class RustelLspClient {
       );
     } catch (err) {
       this._onLog(`[lsp] hover failed: ${err.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Request signature and parameter help at a UTF-16 position.
+   * @param {string} uri
+   * @param {number} line
+   * @param {number} character
+   * @returns {Promise<object | null>}
+   */
+  async signatureHelp(uri, line, character) {
+    if (this._state !== LspState.RUNNING) {
+      return null;
+    }
+    try {
+      return await this._sendRequestRaw(
+        'textDocument/signatureHelp',
+        {
+          textDocument: { uri },
+          position: { line, character },
+        },
+        this._requestTimeoutMs
+      );
+    } catch (err) {
+      this._onLog(`[lsp] signatureHelp failed: ${err.message}`);
       return null;
     }
   }

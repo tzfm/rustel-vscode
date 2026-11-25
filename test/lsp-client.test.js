@@ -90,6 +90,22 @@ test('RustelLspClient runs full lifecycle: initialize, diagnostics, completion, 
           },
         });
         break;
+      case 'textDocument/signatureHelp':
+        io.send({
+          jsonrpc: '2.0',
+          id: msg.id,
+          result: {
+            signatures: [
+              {
+                label: 'euclid(pulses, steps)',
+                parameters: [{ label: 'pulses' }, { label: 'steps' }],
+              },
+            ],
+            activeSignature: 0,
+            activeParameter: 1,
+          },
+        });
+        break;
       case 'shutdown':
         io.send({ jsonrpc: '2.0', id: msg.id, result: null });
         break;
@@ -120,6 +136,10 @@ test('RustelLspClient runs full lifecycle: initialize, diagnostics, completion, 
 
   const hover = await client.hover('file:///demo.strudel', 0, 9);
   assert.match(hover.contents.value, /lpf\(frequency\)/);
+
+  const sig = await client.signatureHelp('file:///demo.strudel', 0, 12);
+  assert.equal(sig.signatures[0].label, 'euclid(pulses, steps)');
+  assert.equal(sig.activeParameter, 1);
 
   assert.equal(diagnostics.length, 1);
   assert.equal(diagnostics[0].diags[0].message, 'example warning');

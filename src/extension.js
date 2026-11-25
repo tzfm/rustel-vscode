@@ -95,8 +95,23 @@ function toVsCodeCompletionItem(item) {
     completion.sortText = item.sortText;
   }
   if (typeof item.insertText === 'string' && item.insertText.length > 0) {
-    // Pass plain string so `$:` lane prefixes in snippets are not parsed as tabstops.
-    completion.insertText = item.insertText;
+    if (item.insertTextFormat === 2) {
+      completion.insertText = new vscode.SnippetString(item.insertText);
+      if (item.insertText.endsWith('("$0")')) {
+        completion.command = {
+          command: 'editor.action.triggerSuggest',
+          title: 'Suggest arguments',
+        };
+      } else if (item.insertText.endsWith('($0)')) {
+        completion.command = {
+          command: 'editor.action.triggerParameterHints',
+          title: 'Show parameter hints',
+        };
+      }
+    } else {
+      // Plain text keeps `$:` lane prefixes intact without snippet parsing.
+      completion.insertText = item.insertText;
+    }
   }
   if (item.deprecated) {
     completion.tags = [vscode.CompletionItemTag.Deprecated];
@@ -463,7 +478,72 @@ function activate(context) {
         const range = result.range ? mapLspRange(result.range) : undefined;
         return new vscode.Hover(md, range);
       },
-    })
+    }),
+    vscode.languages.registerSignatureHelpProvider(
+      STRUDEL_SELECTOR,
+      {
+        async provideSignatureHelp(document, position) {
+          if (lspClient.state !== LspState.RUNNING) return null;
+          const result = await lspClient.signatureHelp(
+            document.uri.toString(),
+            position.line,
+            position.character
+          );
+          if (!result || !Array.isArray(result.signatures) || result.signatures.length === 0) {
+            return null;
+          }
+          const help = new vscode.SignatureHelp();
+          help.signatures = result.signatures.map((sig) => {
+            const info = new vscode.SignatureInformation(
+              typeof sig.label === 'string' ? sig.label : ''
+            );
+            if (sig.documentation) {
+              const docVal =
+                typeof sig.documentation === 'string'
+                  ? sig.documentation
+                  : typeof sig.documentation.value === 'string'
+                    ? sig.documentation.value
+                    : null;
+              if (docVal) {
+                const md = new vscode.MarkdownString(docVal);
+                md.isTrusted = false;
+                info.documentation = md;
+              }
+            }
+            if (Array.isArray(sig.parameters)) {
+              info.parameters = sig.parameters.map((param) => {
+                let pdoc;
+                if (param.documentation) {
+                  const val =
+                    typeof param.documentation === 'string'
+                      ? param.documentation
+                      : typeof param.documentation.value === 'string'
+                        ? param.documentation.value
+                        : null;
+                  if (val) {
+                    const md = new vscode.MarkdownString(val);
+                    md.isTrusted = false;
+                    pdoc = md;
+                  }
+                }
+                return new vscode.ParameterInformation(
+                  typeof param.label === 'string' ? param.label : '',
+                  pdoc
+                );
+              });
+            }
+            return info;
+          });
+          help.activeSignature =
+            typeof result.activeSignature === 'number' ? result.activeSignature : 0;
+          help.activeParameter =
+            typeof result.activeParameter === 'number' ? result.activeParameter : 0;
+          return help;
+        },
+      },
+      '(',
+      ','
+    )
   );
 
   // Commands.

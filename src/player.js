@@ -253,7 +253,13 @@ class RustelPlayer {
     const stderrReader = new NdjsonReader(
       (raw, parsed) => {
         if (this._child !== child) return;
-        this._onLog(`[play] ${raw}`);
+        const noisyHeartbeat =
+          parsed &&
+          typeof parsed === 'object' &&
+          (parsed.live_load || parsed.engine_pressure || parsed.score_active);
+        if (!noisyHeartbeat || this._trace === 'messages') {
+          this._onLog(`[play] ${raw}`);
+        }
         if (!parsed || typeof parsed !== 'object') return;
         if (parsed.live_error && typeof parsed.live_error.message === 'string') {
           this._onPlaybackError(parsed.live_error.message);
