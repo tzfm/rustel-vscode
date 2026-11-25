@@ -1,0 +1,162 @@
+{
+  "name": "rustel-vscode",
+  "displayName": "Rustel",
+  "description": "Language server, live playback, and real-time pattern highlighting for Rustel (.strudel) scores.",
+  "version": "0.1.0",
+  "publisher": "undy-aeon",
+  "license": "AGPL-3.0-or-later",
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "rustel",
+    "strudel",
+    "live coding",
+    "music",
+    "tidal",
+    "lsp",
+    "audio",
+    "algorave"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/undy-aeon/rustel-vscode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/undy-aeon/rustel-vscode/issues"
+  },
+  "homepage": "https://github.com/undy-aeon/rustel-vscode#readme",
+  "main": "./src/extension.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "strudel",
+        "aliases": [
+          "Strudel",
+          "Rustel",
+          "strudel",
+          "rustel"
+        ],
+        "extensions": [
+          ".strudel",
+          ".std"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "strudel",
+        "scopeName": "source.strudel",
+        "path": "./syntaxes/strudel.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "rustel.play",
+        "title": "Play / Update Score",
+        "category": "Rustel",
+        "icon": "$(play)"
+      },
+      {
+        "command": "rustel.playSelection",
+        "title": "Play Selection",
+        "category": "Rustel",
+        "icon": "$(debug-start)"
+      },
+      {
+        "command": "rustel.stop",
+        "title": "Stop Playback",
+        "category": "Rustel",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "rustel.restartServer",
+        "title": "Restart Language Server",
+        "category": "Rustel",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "rustel.showOutput",
+        "title": "Show Output Log",
+        "category": "Rustel",
+        "icon": "$(output)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "rustel.play",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "editorTextFocus && editorLangId == strudel"
+      },
+      {
+        "command": "rustel.playSelection",
+        "key": "ctrl+shift+enter",
+        "mac": "cmd+shift+enter",
+        "when": "editorTextFocus && editorLangId == strudel"
+      },
+      {
+        "command": "rustel.stop",
+        "key": "ctrl+.",
+        "mac": "cmd+.",
+        "when": "editorLangId == strudel || rustel.isPlaying"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "rustel.play",
+          "when": "resourceLangId == strudel",
+          "group": "navigation@1"
+        },
+        {
+          "command": "rustel.stop",
+          "when": "resourceLangId == strudel && rustel.isPlaying",
+          "group": "navigation@2"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Rustel",
+      "properties": {
+        "rustel.serverPath": {
+          "type": "string",
+          "default": "rustel",
+          "description": "Path to the rustel binary used for rustel lsp --stdio and rustel play."
+        },
+        "rustel.extraPlayArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Extra command-line flags passed to rustel play (for example [\"--output\", \"silent\"] or [\"--buffer-frames\", \"256\"])."
+        },
+        "rustel.highlightEvents": {
+          "type": "boolean",
+          "default": true,
+          "description": "Highlight sounding mini-notation tokens in the editor during live playback."
+        },
+        "rustel.trace": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages"
+          ],
+          "default": "off",
+          "description": "Log raw LSP JSON-RPC messages and live UI protocol records to the Rustel output channel."
+        }
+      }
+    }
+  }
+}

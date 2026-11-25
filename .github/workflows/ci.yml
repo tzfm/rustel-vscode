@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate JSON manifests and syntax
+        shell: bash
+        run: |
+          node -e '
+            const fs = require("fs");
+            for (const file of [
+              "package.json",
+              "language-configuration.json",
+              "syntaxes/strudel.tmLanguage.json",
+              ".vscode/launch.json"
+            ]) {
+              JSON.parse(fs.readFileSync(file, "utf8"));
+            }
+            if (!fs.existsSync("images/icon.png")) {
+              throw new Error("missing images/icon.png");
+            }
+          '
+          node --check src/protocol.js
+          node --check src/lsp-client.js
+          node --check src/player.js
+          node --check src/extension.js
+
+      - name: Run unit tests
+        shell: bash
+        run: node --test
