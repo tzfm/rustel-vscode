@@ -33,6 +33,14 @@
   },
   "homepage": "https://github.com/undy-aeon/rustel-vscode#readme",
   "main": "./src/extension.js",
+  "activationEvents": [
+    "onLanguage:strudel"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "scripts": {
     "test": "node --test"
   },
